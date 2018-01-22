@@ -29,9 +29,7 @@ void tsk0_func(TASK_ANY task_msg)
         std::exit(EXIT_SUCCESS);
     }
 #endif
-} 
-
-
+}
 void tsk1_func(TASK_ANY task_msg)
 {
     if (task_msg.type() == typeid(int))
