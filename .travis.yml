@@ -20,7 +20,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - libevent-dev
-      - boost
+      - libboost-all-dev
 
 
 
