@@ -18,7 +18,7 @@ void tsk0_func(TASK_MSG task_msg)
         __LOG(error, "not support type");
     }
 
-    if (tmp == 26)
+    if (tmp == 50)
     {
         __LOG(error, "exit now!!!!!");
         std::exit(EXIT_SUCCESS);
@@ -85,4 +85,5 @@ int main()
     std::this_thread::sleep_for(std::chrono::seconds(1));
     ins->send2task(TASK0, MSG_TYPE::TASK_DEL, 10);
     std::this_thread::sleep_for(std::chrono::seconds(20));
+    __LOG(error, "example exit!1");
 }
