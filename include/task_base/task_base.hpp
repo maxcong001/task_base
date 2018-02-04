@@ -106,8 +106,8 @@ class task_mamager
             return false;
         }
         TASK_MSG msg;
-        msg->type = type;
-        msg->body = body;
+        msg.type = type;
+        msg.body = body;
         it->second->in_queue(msg);
         // send eventfd message
         uint64_t one;
