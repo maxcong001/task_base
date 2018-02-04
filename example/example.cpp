@@ -70,9 +70,7 @@ int main()
     timer001->startOnce(1000, [] {
         auto ins = task_mamager::instance();
         ins->send2task(TASK0, 10);
-
     });
-
 
     ins->init();
 }

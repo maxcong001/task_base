@@ -4,9 +4,19 @@ using task_func = std::function<void(TASK_ANY msg)>;
 class task_base
 {
   public:
+    task_base() : _evfd(-1)
+    {
+    }
+    ~task_base()
+    {
+        if (_evfd >= 0)
+        {
+            close(_evfd);
+            _evfd = -1;
+        }
+    }
     bool init(bool new_thread)
     {
-
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -54,6 +64,10 @@ class task_base
     {
         return _evfd;
     }
+    translib::Loop &get_loop()
+    {
+        return _loop;
+    }
     std::mutex mtx;
     TASK_QUEUE _task_queue;
     TASK_QUEUE _tmp_task_queue;
@@ -61,6 +75,8 @@ class task_base
     // int event fd
     int _evfd;
     task_func _task_func;
+    // note: do not change the sequence of _loop and _event_server
+    // _event_server should distructure first!!!!
     translib::Loop _loop;
     std::shared_ptr<translib::EventFdServer> _event_server;
 };
@@ -96,10 +112,14 @@ class task_mamager
     }
     bool add_tasks(std::string name, task_ptr_t task)
     {
-        // no log needed here, this is called only
+        // no lock needed here, this is called only
         // when init
         task_map[name] = task;
         return true;
+    }
+    bool del_tasks(std::string name)
+    {
+        task_map.erase(name);
     }
     int get_task_id(std::string name)
     {
@@ -118,7 +138,7 @@ class task_mamager
         add_tasks(name, tmp_task_ptr_t);
         return true;
     }
-
+    // note  if _poll is set to true, it will hang here and wait for incoming message
     bool init(bool _poll = true)
     {
         if (task_map.find(TASK0) == task_map.end())
