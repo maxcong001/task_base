@@ -23,9 +23,9 @@ void tsk0_func(TASK_MSG task_msg)
         __LOG(error, "exit now!!!!!");
         std::exit(EXIT_SUCCESS);
     }
-
-    task_mamager::instance()->send2task(TASK1, MSG_TYPE::TASK_PUT, i++);
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    task_mamager::instance()->send2task(TASK1, MSG_TYPE::TASK_PUT, i++);
+
 #if 0
     
     if (i > 20)
@@ -48,9 +48,8 @@ void tsk1_func(TASK_MSG task_msg)
     {
         __LOG(error, "not support type");
     }
-
-    task_mamager::instance()->send2task(TASK2, MSG_TYPE::TASK_PUT, i++);
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    task_mamager::instance()->send2task(TASK2, MSG_TYPE::TASK_PUT, i++);
 }
 void tsk2_func(TASK_MSG task_msg)
 {
@@ -66,9 +65,8 @@ void tsk2_func(TASK_MSG task_msg)
     {
         __LOG(error, "not support type");
     }
-
-    task_mamager::instance()->send2task(TASK0, MSG_TYPE::TASK_PUT, i++);
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    task_mamager::instance()->send2task(TASK0, MSG_TYPE::TASK_PUT, i++);
 }
 int main()
 {
@@ -78,8 +76,6 @@ int main()
     ins->add_tasks(TASK0, tsk0_func);
     ins->add_tasks(TASK1, tsk1_func);
     ins->add_tasks(TASK2, tsk2_func);
-
-
 
     ins->init(false);
     std::this_thread::sleep_for(std::chrono::seconds(1));
