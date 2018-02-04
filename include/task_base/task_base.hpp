@@ -1,6 +1,6 @@
 #include <task_base/util.hpp>
 void evfdCallback(int fd, short event, void *args);
-using task_func = std::function<void(TASK_ANY msg)>;
+using task_func = std::function<void(TASK_MSG msg)>;
 class task_base
 {
   public:
@@ -46,8 +46,11 @@ class task_base
     }
     void process_msg(uint64_t num)
     {
-        // actually process all the messages
-        swap(_task_queue, _tmp_task_queue);
+        {
+            std::lock_guard<std::mutex> lck(mtx);
+            // actually process all the messages
+            swap(_task_queue, _tmp_task_queue);
+        }
         while (_tmp_task_queue.size() != 0)
         {
             auto tmp = _tmp_task_queue.front();
@@ -55,7 +58,7 @@ class task_base
             _tmp_task_queue.pop();
         }
     }
-    void in_queue(TASK_ANY msg)
+    void in_queue(TASK_MSG msg)
     {
         std::lock_guard<std::mutex> lck(mtx);
         _task_queue.emplace(msg);
@@ -91,14 +94,20 @@ class task_mamager
         static task_mamager *ins = new task_mamager();
         return ins;
     }
-    bool send2task(std::string name, TASK_ANY msg)
+    bool send2task(std::string name, MSG_TYPE type, TASK_ANY body)
     {
+        // actually here need a lock here
+        // but if you start and tasks and do not add more tasks
+        // the lock is not needed
         auto it = task_map.find(name);
         if (it == task_map.end())
         {
             __LOG(warn, "no such a task named : " << name);
             return false;
         }
+        TASK_MSG msg;
+        msg->type = type;
+        msg->body = body;
         it->second->in_queue(msg);
         // send eventfd message
         uint64_t one;

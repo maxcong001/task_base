@@ -27,5 +27,19 @@
 #define TASK_ANY_CAST boost::any_cast
 #endif
 
-typedef std::queue<TASK_ANY> TASK_QUEUE;
 #define TASK0 "task0"
+
+enum class MSG_TYPE : unsigned int
+{
+    TASK_PUT = 0,
+    TASK_GET,
+    TASK_DEL,
+    TASK_MAX
+};
+struct TASK_MSG
+{
+    MSG_TYPE type;
+    TASK_ANY body;
+};
+
+typedef std::queue<TASK_MSG> TASK_QUEUE;
