@@ -46,6 +46,7 @@ class task_base
     }
     void process_msg(uint64_t num)
     {
+        __LOG(debug, "task with id : " << _evfd << " receive message");
         {
             std::lock_guard<std::mutex> lck(mtx);
             // actually process all the messages
@@ -60,6 +61,7 @@ class task_base
     }
     void in_queue(TASK_MSG msg)
     {
+        __LOG(debug, "inqueue for task with id :" << _evfd);
         std::lock_guard<std::mutex> lck(mtx);
         _task_queue.emplace(msg);
     }
@@ -117,6 +119,10 @@ class task_mamager
             __LOG(error, "write event fd : " << it->second->get_id() << " fail");
             return false;
         }
+        else
+        {
+            __LOG(debug, "send to eventfd : " << it->second->get_id());
+        }
         return true;
     }
     bool add_tasks(std::string name, task_ptr_t task)
@@ -129,6 +135,7 @@ class task_mamager
     bool del_tasks(std::string name)
     {
         task_map.erase(name);
+        return true;
     }
     int get_task_id(std::string name)
     {
