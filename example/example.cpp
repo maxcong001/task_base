@@ -79,7 +79,6 @@ int main()
     ins->add_tasks(TASK1, tsk1_func);
     ins->add_tasks(TASK2, tsk2_func);
 
-    auto ins = task_mamager::instance();
     ins->send2task(TASK0, MSG_TYPE::TASK_DEL, 10);
 
     ins->init(false);
