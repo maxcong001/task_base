@@ -79,12 +79,9 @@ int main()
     ins->add_tasks(TASK1, tsk1_func);
     ins->add_tasks(TASK2, tsk2_func);
 
-    int timerID001 = 100;
-    translib::Timer::ptr_p timer001 = translib::TimerManager::instance()->getTimer(&timerID001);
-    timer001->startOnce(1000, [] {
-        auto ins = task_mamager::instance();
-        ins->send2task(TASK0, MSG_TYPE::TASK_DEL, 10);
-    });
+    auto ins = task_mamager::instance();
+    ins->send2task(TASK0, MSG_TYPE::TASK_DEL, 10);
 
-    ins->init();
+    ins->init(false);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 }
