@@ -112,7 +112,7 @@ class task_mamager
         msg.body = body;
         it->second->in_queue(msg);
         // send eventfd message
-        uint64_t one;
+        uint64_t one = 1;
         int ret = write(it->second->get_id(), &one, sizeof(one));
         if (ret != sizeof(one))
         {
