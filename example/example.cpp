@@ -6,7 +6,7 @@ int i = 0;
 void tsk0_func(TASK_MSG task_msg)
 {
     int tmp = 0;
-    __LOG(debug, "receive message with type: " << task_msg.type);
+    __LOG(debug, "receive message with type: " << static_cast<int>(task_msg.type));
 
     if (task_msg.body.type() == typeid(int))
     {
@@ -37,7 +37,7 @@ void tsk0_func(TASK_MSG task_msg)
 void tsk1_func(TASK_MSG task_msg)
 {
     int tmp = 0;
-    __LOG(debug, "receive message with type: " << task_msg.type);
+    __LOG(debug, "receive message with type: " << static_cast<int>(task_msg.type));
 
     if (task_msg.body.type() == typeid(int))
     {
@@ -55,7 +55,7 @@ void tsk1_func(TASK_MSG task_msg)
 void tsk2_func(TASK_MSG task_msg)
 {
     int tmp = 0;
-    __LOG(debug, "receive message with type: " << task_msg.type);
+    __LOG(debug, "receive message with type: " << static_cast<int>(task_msg.type));
 
     if (task_msg.body.type() == typeid(int))
     {
