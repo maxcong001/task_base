@@ -79,8 +79,10 @@ int main()
     ins->add_tasks(TASK1, tsk1_func);
     ins->add_tasks(TASK2, tsk2_func);
 
-    ins->send2task(TASK0, MSG_TYPE::TASK_DEL, 10);
+
 
     ins->init(false);
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    ins->send2task(TASK0, MSG_TYPE::TASK_DEL, 10);
+    std::this_thread::sleep_for(std::chrono::seconds(20));
 }
