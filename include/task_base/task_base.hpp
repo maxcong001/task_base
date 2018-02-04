@@ -119,26 +119,35 @@ class task_mamager
         return true;
     }
 
-    // note!!!!: main thread will hang here
-    bool init()
+    bool init(bool _poll = true)
     {
         if (task_map.find(TASK0) == task_map.end())
         {
             __LOG(error, "!!!!!!!!!at lease task0 should be provided!!");
             return false;
         }
-        for (auto it : task_map)
+        if (_poll)
         {
-            if (it.first.compare(TASK0))
+            for (auto it : task_map)
+            {
+                if (it.first.compare(TASK0))
+                {
+                    it.second->init(true);
+                }
+                else
+                {
+                    __LOG(debug, "task0 do not need init, it will init later");
+                }
+            }
+            task_map[TASK0]->init(false);
+        }
+        else
+        {
+            for (auto it : task_map)
             {
                 it.second->init(true);
             }
-            else
-            {
-                __LOG(debug, "task0 do not need init, it will init later");
-            }
         }
-        task_map[TASK0]->init(false);
         return true;
     }
     std::map<std::string, task_ptr_t> task_map;
