@@ -1,12 +1,22 @@
 #include <task_base/util.hpp>
 void evfdCallback(int fd, short event, void *args);
-using task_func = std::function<void(TASK_ANY msg)>;
+using task_func = std::function<void(TASK_MSG msg)>;
 class task_base
 {
   public:
+    task_base() : _evfd(-1)
+    {
+    }
+    ~task_base()
+    {
+        if (_evfd >= 0)
+        {
+            close(_evfd);
+            _evfd = -1;
+        }
+    }
     bool init(bool new_thread)
     {
-
         _evfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (_evfd < 0)
         {
@@ -36,8 +46,12 @@ class task_base
     }
     void process_msg(uint64_t num)
     {
-        // actually process all the messages
-        swap(_task_queue, _tmp_task_queue);
+        __LOG(debug, "task with id : " << _evfd << " receive message");
+        {
+            std::lock_guard<std::mutex> lck(mtx);
+            // actually process all the messages
+            swap(_task_queue, _tmp_task_queue);
+        }
         while (_tmp_task_queue.size() != 0)
         {
             auto tmp = _tmp_task_queue.front();
@@ -45,14 +59,19 @@ class task_base
             _tmp_task_queue.pop();
         }
     }
-    void in_queue(TASK_ANY msg)
+    void in_queue(TASK_MSG msg)
     {
+        __LOG(debug, "inqueue for task with id :" << _evfd);
         std::lock_guard<std::mutex> lck(mtx);
         _task_queue.emplace(msg);
     }
     int get_id()
     {
         return _evfd;
+    }
+    translib::Loop &get_loop()
+    {
+        return _loop;
     }
     std::mutex mtx;
     TASK_QUEUE _task_queue;
@@ -61,6 +80,8 @@ class task_base
     // int event fd
     int _evfd;
     task_func _task_func;
+    // note: do not change the sequence of _loop and _event_server
+    // _event_server should distructure first!!!!
     translib::Loop _loop;
     std::shared_ptr<translib::EventFdServer> _event_server;
 };
@@ -75,30 +96,45 @@ class task_mamager
         static task_mamager *ins = new task_mamager();
         return ins;
     }
-    bool send2task(std::string name, TASK_ANY msg)
+    bool send2task(std::string name, MSG_TYPE type, TASK_ANY body)
     {
+        // actually here need a lock here
+        // but if you start and tasks and do not add more tasks
+        // the lock is not needed
         auto it = task_map.find(name);
         if (it == task_map.end())
         {
             __LOG(warn, "no such a task named : " << name);
             return false;
         }
+        TASK_MSG msg;
+        msg.type = type;
+        msg.body = body;
         it->second->in_queue(msg);
         // send eventfd message
-        uint64_t one;
+        uint64_t one = 1;
         int ret = write(it->second->get_id(), &one, sizeof(one));
         if (ret != sizeof(one))
         {
             __LOG(error, "write event fd : " << it->second->get_id() << " fail");
             return false;
         }
+        else
+        {
+            __LOG(debug, "send to eventfd : " << it->second->get_id());
+        }
         return true;
     }
     bool add_tasks(std::string name, task_ptr_t task)
     {
-        // no log needed here, this is called only
+        // no lock needed here, this is called only
         // when init
         task_map[name] = task;
+        return true;
+    }
+    bool del_tasks(std::string name)
+    {
+        task_map.erase(name);
         return true;
     }
     int get_task_id(std::string name)
@@ -118,27 +154,36 @@ class task_mamager
         add_tasks(name, tmp_task_ptr_t);
         return true;
     }
-
-    // note!!!!: main thread will hang here
-    bool init()
+    // note  if _poll is set to true, it will hang here and wait for incoming message
+    bool init(bool _poll = true)
     {
         if (task_map.find(TASK0) == task_map.end())
         {
             __LOG(error, "!!!!!!!!!at lease task0 should be provided!!");
             return false;
         }
-        for (auto it : task_map)
+        if (_poll)
         {
-            if (it.first.compare(TASK0))
+            for (auto it : task_map)
+            {
+                if (it.first.compare(TASK0))
+                {
+                    it.second->init(true);
+                }
+                else
+                {
+                    __LOG(debug, "task0 do not need init, it will init later");
+                }
+            }
+            task_map[TASK0]->init(false);
+        }
+        else
+        {
+            for (auto it : task_map)
             {
                 it.second->init(true);
             }
-            else
-            {
-                __LOG(debug, "task0 do not need init, it will init later");
-            }
         }
-        task_map[TASK0]->init(false);
         return true;
     }
     std::map<std::string, task_ptr_t> task_map;

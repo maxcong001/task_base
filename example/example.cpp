@@ -3,25 +3,29 @@
 #define TASK1 "task1"
 #define TASK2 "task2"
 int i = 0;
-void tsk0_func(TASK_ANY task_msg)
+void tsk0_func(TASK_MSG task_msg)
 {
-    if (task_msg.type() == typeid(int))
+    int tmp = 0;
+    __LOG(debug, "receive message with type: " << static_cast<int>(task_msg.type));
+
+    if (task_msg.body.type() == typeid(int))
     {
-        int tmp = TASK_ANY_CAST<int>(task_msg);
-        __LOG(debug, "receive message: " << tmp);
-        if (tmp == 26)
-        {
-            __LOG(error, "exit now!!!!!");
-            std::exit(EXIT_SUCCESS);
-        }
+        tmp = TASK_ANY_CAST<int>(task_msg.body);
+        __LOG(debug, "receive message with body : " << tmp);
     }
     else
     {
         __LOG(error, "not support type");
     }
 
-    task_mamager::instance()->send2task(TASK1, i++);
+    if (tmp == 50)
+    {
+        __LOG(error, "exit now!!!!!");
+        std::exit(EXIT_SUCCESS);
+    }
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    task_mamager::instance()->send2task(TASK1, MSG_TYPE::TASK_PUT, i++);
+
 #if 0
     
     if (i > 20)
@@ -30,31 +34,39 @@ void tsk0_func(TASK_ANY task_msg)
     }
 #endif
 }
-void tsk1_func(TASK_ANY task_msg)
+void tsk1_func(TASK_MSG task_msg)
 {
-    if (task_msg.type() == typeid(int))
+    int tmp = 0;
+    __LOG(debug, "receive message with type: " << static_cast<int>(task_msg.type));
+
+    if (task_msg.body.type() == typeid(int))
     {
-        __LOG(debug, "receive message: " << TASK_ANY_CAST<int>(task_msg));
+        tmp = TASK_ANY_CAST<int>(task_msg.body);
+        __LOG(debug, "receive message with body : " << tmp);
     }
     else
     {
         __LOG(error, "not support type");
     }
-    task_mamager::instance()->send2task(TASK2, i++);
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    task_mamager::instance()->send2task(TASK2, MSG_TYPE::TASK_PUT, i++);
 }
-void tsk2_func(TASK_ANY task_msg)
+void tsk2_func(TASK_MSG task_msg)
 {
-    if (task_msg.type() == typeid(int))
+    int tmp = 0;
+    __LOG(debug, "receive message with type: " << static_cast<int>(task_msg.type));
+
+    if (task_msg.body.type() == typeid(int))
     {
-        __LOG(debug, "receive message: " << TASK_ANY_CAST<int>(task_msg));
+        tmp = TASK_ANY_CAST<int>(task_msg.body);
+        __LOG(debug, "receive message with body : " << tmp);
     }
     else
     {
         __LOG(error, "not support type");
     }
-    task_mamager::instance()->send2task(TASK0, i++);
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    task_mamager::instance()->send2task(TASK0, MSG_TYPE::TASK_PUT, i++);
 }
 int main()
 {
@@ -65,14 +77,9 @@ int main()
     ins->add_tasks(TASK1, tsk1_func);
     ins->add_tasks(TASK2, tsk2_func);
 
-    int timerID001 = 100;
-    translib::Timer::ptr_p timer001 = translib::TimerManager::instance()->getTimer(&timerID001);
-    timer001->startOnce(1000, [] {
-        auto ins = task_mamager::instance();
-        ins->send2task(TASK0, 10);
-
-    });
-
-
-    ins->init();
+    ins->init(false);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ins->send2task(TASK0, MSG_TYPE::TASK_DEL, 10);
+    std::this_thread::sleep_for(std::chrono::seconds(20));
+    __LOG(error, "example exit!1");
 }

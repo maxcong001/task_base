@@ -8,7 +8,7 @@ void evfdCallback(int fd, short event, void *args)
         __LOG(warn, "read return : " << ret);
         return;
     }
-
+    __LOG(debug, "task with id : " << fd << " receive eventfd message, count is : " << one);
     // for (uint64_t i = 0; i < one; i++)
     // {
     task_base *tmp = reinterpret_cast<task_base *>(args);
