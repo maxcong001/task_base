@@ -1,13 +1,41 @@
+#pragma once
 #include <task_base/util.hpp>
+#include <task_base/task_base.hpp>
+
+class manager_task : public task_base
+{
+
+  public:
+
+    manager_task(std::string name) : task_base(name)
+    {
+        _name = TASK0;
+    }
+
+    ~manager_task()
+    {
+    }
+    void restart() override
+    {
+        // to do
+    }
+    bool on_before_loop() override;
+    bool on_message(TASK_MSG msg) override;
+
+    std::map<std::string, bool> hb_map;
+};
 
 typedef std::shared_ptr<task_base> task_ptr_t;
-void tsk0_func(TASK_MSG task_msg);
-class task_mamager : _hb_itval(1000), _seq_id(0)
+
+class task_manager
 {
   public:
-    static task_mamager *instance()
+    task_manager() : _hb_itval(1000), _seq_id(0)
     {
-        static task_mamager *ins = new task_mamager();
+    }
+    static task_manager *instance()
+    {
+        static task_manager *ins = new task_manager();
         return ins;
     }
     bool send2task(std::string name, MSG_TYPE type, TASK_ANY body, std::uint32_t seq_id = 0)
@@ -51,16 +79,19 @@ class task_mamager : _hb_itval(1000), _seq_id(0)
             }
             else
             {
-                send2task(it.first, TASK_HB, it.first, _seq_id);
+                send2task(it.first, MSG_TYPE::TASK_HB, it.first, _seq_id);
                 _seq_id++;
             }
         }
+        return true;
     }
-    bool add_tasks(std::string name, task_ptr_t task)
+    bool add_tasks(task_ptr_t task)
     {
         // no lock needed here, this is called only
         // when init
-        task_map[name] = task;
+        // if add task at runtime, then need lock here
+        std::string task_name = task->get_task_name();
+        task_map[task_name] = task;
         return true;
     }
     bool del_tasks(std::string name)
@@ -78,23 +109,15 @@ class task_mamager : _hb_itval(1000), _seq_id(0)
         }
         return it->second->get_id();
     }
-    // when you add task at run time, please set init to true,
-    // else set init to false
-    bool add_tasks(std::string name, task_func cb_fun, bool init = false)
-    {
-        task_ptr_t tmp_task_ptr_t = std::make_shared<task_base>();
-        tmp_task_ptr_t->set_msg_cb(cb_fun);
-        add_tasks(name, tmp_task_ptr_t);
-        if (init)
-        {
-            tmp_task_ptr_t->init(true);
-        }
-        return true;
-    }
+
     // note  if _poll is set to true, it will hang here and wait for incoming message
     bool init(bool _poll = true)
     {
-        add_tasks(TASK0, tsk0_func);
+        // add task0
+        //std::shared_ptr<task_base> tmp_task_ptr_t = std::shared_ptr<manager_task>(new manager_task(std::string(TASK0)));
+        task_ptr_t tmp_task_ptr_t = std::static_pointer_cast<task_base>(std::make_shared<manager_task>(std::string(TASK0)));
+        add_tasks(tmp_task_ptr_t);
+
         if (task_map.find(TASK0) == task_map.end())
         {
             __LOG(error, "!!!!!!!!!at lease task0 should be provided!!");
@@ -105,60 +128,7 @@ class task_mamager : _hb_itval(1000), _seq_id(0)
         {
             if (!it.first.compare(TASK0))
             {
-                // this is task0
-                // 1. heartbeat related
-                it.second._timer_mgr.getTimer()->startForever(_hb_itval, [this]() {
-                    // if this is the first loop and do not have
-                    thread_local bool first_loop = true;
-                    if (first_loop)
-                    {
-                        // first loop, there is no HB response
-                        // do nothing
-                        return;
-                    }
-                    first_loop = false;
-                    // first check if the last response returns.
-                    for (auto hb_iter : hb_map)
-                    {
-                        if (hb_iter.second)
-                        {
-                            // HB response
-                        }
-                        else
-                        {
-                            // HB rep does not received
-                            // 1. get the task ptr_t
-                            std::string name = hb_iter.first;
-                            auto iter = task_map.find(name);
-                            if (iter == task_map.end())
-                            {
-                                __LOG(warn, "no such a task named : " << name);
-                                return false;
-                            }
-                            // 2. get the task cb function
-                            task_func tmp_cb = iter->second->get_msg_cb();
-                            // 3. delete the task
-                            // note: this is called when timer fired, actually not in the loop of task_map
-                            // So we can delete it here not break the iter
-                            task_map.erase(name);
-                            // 4. add the task again
-                            add_tasks(name, tmp_cb);
-                            // 5. init the task
-                            auto new_task_iter = task_map.find(name);
-                            if (new_task_iter == task_map.end())
-                            {
-                                __LOG(warn, "no such a task named : " << name);
-                                return false;
-                            }
-                            new_task_iter->init(true);
-                        }
-                    }
-                    // clear the hb info
-                    hb_map.clear();
-                    // send heartbeat
-                    send_hb_all();
-                });
-                // 2. init the task0
+                // init the task0
                 if (_poll)
                 {
                     it.second->init(false);

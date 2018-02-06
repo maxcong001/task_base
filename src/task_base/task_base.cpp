@@ -16,13 +16,3 @@ void evfdCallback(int fd, short event, void *args)
     // }
 }
 
-void tsk0_func(TASK_MSG task_msg)
-{
-    // send heart beat and wait for the response
-    auto ins = task_mamager::instance();
-
-    if (task_msg.type == MSG_TYPE::TASK_HB)
-    {
-        ins->send2task(task_msg.name, task_msg.type, );
-    }
-}
