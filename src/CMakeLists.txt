@@ -18,18 +18,6 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
 
 # Collect all source files.
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp *.c)
-#AUX_SOURCE_DIRECTORY(. SRC_LIST)
-#AUX_SOURCE_DIRECTORY(./utils SRC_LIST_UTILS)
-
-# Not compile test files into library
-IF(NOT ENABLE_TEST)
-	SET (TEST_CPP_LIST
-#		utils/MTestUtil.cpp
-		stub.cpp
-	)
-
-	list(REMOVE_ITEM SOURCES ${TEST_CPP_LIST})
-ENDIF()
 
 
 # Generate shared library lib${PROJECT_NAME}.
