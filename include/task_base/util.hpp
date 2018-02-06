@@ -8,7 +8,8 @@
 #include <memory>
 #include <thread>
 #include <cstdlib>
-
+#include <atomic>
+#include <cstdint>
 #include "translib/loop.h"
 #include "translib/eventClient.h"
 #include "translib/eventServer.h"
@@ -31,7 +32,9 @@
 
 enum class MSG_TYPE : unsigned int
 {
-    TASK_PUT = 0,
+    TASK_HB = 0,
+    TASK_RESTART,
+    TASK_PUT,
     TASK_GET,
     TASK_DEL,
     TASK_MAX
@@ -39,6 +42,9 @@ enum class MSG_TYPE : unsigned int
 struct TASK_MSG
 {
     MSG_TYPE type;
+    std::uint32_t seq_id;
+    std::string from;
+    std::string to;
     TASK_ANY body;
 };
 
