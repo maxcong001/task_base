@@ -1,8 +1,14 @@
 #include <task_base/task_manager.hpp>
 
-bool manager_task::on_after_loop()
+bool manager_task::on_before_loop()
 {
     __LOG(debug, "on after loop is called");
+    start_hb();
+    return true;
+}
+bool manager_task::start_hb()
+{
+
     // start timer for heart beat
     // 1. timer will first check if we had received the hb response
     // 2. if hb response does not come, call the restart fuction
@@ -10,7 +16,7 @@ bool manager_task::on_after_loop()
     // 3. send hb to all the tasks
     // 4. clear the hb map
 
-    _timer_mgr.getTimer()->startForever(_hb_itval, [this]() {
+    _timer_mgr.getTimer(&_hb_tid)->startForever(_hb_itval, [this]() {
         thread_local bool first_loop = true;
         if (first_loop)
         {

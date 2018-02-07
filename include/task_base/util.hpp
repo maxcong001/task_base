@@ -48,3 +48,4 @@ struct TASK_MSG
 };
 
 typedef std::queue<TASK_MSG> TASK_QUEUE;
+#define TASK_HB_INTERVAL 1000
