@@ -6,7 +6,6 @@ class manager_task : public task_base
 {
 
   public:
-
     manager_task(std::string name) : task_base(name)
     {
         _name = TASK0;
@@ -19,7 +18,11 @@ class manager_task : public task_base
     {
         // to do
     }
-    bool on_before_loop() override;
+    bool on_before_loop() override
+    {
+        return on_after_loop();
+    }
+    bool on_after_loop() override;
     bool on_message(TASK_MSG msg) override;
 
     std::map<std::string, bool> hb_map;
@@ -64,7 +67,34 @@ class task_manager
         }
         else
         {
-            __LOG(debug, "send to eventfd : " << it->second->get_id());
+            //__LOG(debug, "send to eventfd : " << it->second->get_id());
+        }
+        return true;
+    }
+    bool send2task(std::string name, TASK_MSG msg)
+    {
+        // actually here need a lock here
+        // but if you start and tasks and do not add more tasks
+        // the lock is not needed
+        auto it = task_map.find(name);
+        if (it == task_map.end())
+        {
+            __LOG(warn, "no such a task named : " << name);
+            return false;
+        }
+
+        it->second->in_queue(msg);
+        // send eventfd message
+        uint64_t one = 1;
+        int ret = write(it->second->get_id(), &one, sizeof(one));
+        if (ret != sizeof(one))
+        {
+            __LOG(error, "write event fd : " << it->second->get_id() << " fail");
+            return false;
+        }
+        else
+        {
+            //__LOG(debug, "send to eventfd : " << it->second->get_id());
         }
         return true;
     }
@@ -76,11 +106,12 @@ class task_manager
         {
             if (it.first.compare(TASK0))
             {
+                // not task0
+                send2task(it.first, MSG_TYPE::TASK_HB, it.first, _seq_id);
+                _seq_id++;
             }
             else
             {
-                send2task(it.first, MSG_TYPE::TASK_HB, it.first, _seq_id);
-                _seq_id++;
             }
         }
         return true;
@@ -128,21 +159,21 @@ class task_manager
         {
             if (!it.first.compare(TASK0))
             {
-                // init the task0
-                if (_poll)
-                {
-                    it.second->init(false);
-                }
-                else
-                {
-                    it.second->init(true);
-                }
             }
             else
             {
                 // this is not task 0, start a new task
                 it.second->init(true);
             }
+        }
+        // init the task0
+        if (_poll)
+        {
+            task_map[TASK0]->init(false);
+        }
+        else
+        {
+            task_map[TASK0]->init(true);
         }
         return true;
     }

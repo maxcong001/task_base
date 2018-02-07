@@ -1,7 +1,8 @@
 #include <task_base/task_manager.hpp>
 
-bool manager_task::on_before_loop()
+bool manager_task::on_after_loop()
 {
+    __LOG(debug, "on after loop is called");
     // start timer for heart beat
     // 1. timer will first check if we had received the hb response
     // 2. if hb response does not come, call the restart fuction
@@ -10,28 +11,35 @@ bool manager_task::on_before_loop()
     // 4. clear the hb map
 
     _timer_mgr.getTimer()->startForever(_hb_itval, [this]() {
-        // if this is the first loop and do not have
         thread_local bool first_loop = true;
         if (first_loop)
         {
             //hb_map.clear();
             // first loop, there is no HB response
             // do nothing
+            __LOG(warn, "this is the first loop!");
+            first_loop = false;
             return;
         }
-        first_loop = false;
 
         auto ins = task_manager::instance();
         std::map<std::string, task_ptr_t> tmp_task_map = ins->task_map;
         // first check if the last response returns.
         for (auto hb_iter : hb_map)
         {
+
+            if (!hb_iter.first.compare(TASK0))
+            {
+                continue;
+            }
+
             if (hb_iter.second)
             {
                 // HB response
             }
             else
             {
+                __LOG(warn, "task " << hb_iter.first << " does not receive HB response");
                 // HB rep does not received
                 // 1. get the task ptr_t
                 std::string name = hb_iter.first;
@@ -41,7 +49,7 @@ bool manager_task::on_before_loop()
                     __LOG(warn, "no such a task named : " << name);
                     return;
                 }
-                // 2. get the task cb function
+                // 2. call restart functino
                 iter->second->restart();
             }
         }
@@ -56,16 +64,19 @@ bool manager_task::on_before_loop()
         }
 
         // send heartbeat
+        __LOG(debug, "send HB to all");
         ins->send_hb_all();
-
     });
     return true;
 }
-bool manager_task::on_message(TASK_MSG msg) 
+bool manager_task::on_message(TASK_MSG msg)
 {
+
     if (msg.type == MSG_TYPE::TASK_HB)
     {
-        hb_map.insert(std::pair<std::string, bool>(TASK_ANY_CAST<std::string>(msg.body), true));
+        __LOG(debug, "got HB response from task " << TASK_ANY_CAST<std::string>(msg.body));
+        //hb_map.insert(std::pair<std::string, bool>(TASK_ANY_CAST<std::string>(msg.body), true));
+        hb_map[TASK_ANY_CAST<std::string>(msg.body)] = true;
     }
     return true;
 }

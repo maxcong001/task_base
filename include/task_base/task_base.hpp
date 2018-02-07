@@ -28,6 +28,11 @@ class task_base
     {
         return true;
     }
+    virtual bool on_after_loop()
+    {
+        __LOG(warn, "this is default funtion");
+        return true;
+    }
     // set the callback function for evnet coming
     virtual bool on_message(TASK_MSG msg) = 0;
     bool init(bool new_thread)
@@ -53,24 +58,10 @@ class task_base
         _loop.start(new_thread);
         return true;
     }
-    void process_msg(uint64_t num)
-    {
-        __LOG(debug, "task with id : " << _evfd << " receive message");
-        {
-            std::lock_guard<std::mutex> lck(mtx);
-            // actually process all the messages
-            swap(_task_queue, _tmp_task_queue);
-        }
-        while (_tmp_task_queue.size() != 0)
-        {
-            auto tmp = _tmp_task_queue.front();
-            on_message(tmp);
-            _tmp_task_queue.pop();
-        }
-    }
+    void process_msg(uint64_t num);
     void in_queue(TASK_MSG msg)
     {
-        __LOG(debug, "inqueue for task with id :" << _evfd);
+        //__LOG(debug, "inqueue for task with id :" << _evfd);
         std::lock_guard<std::mutex> lck(mtx);
         _task_queue.emplace(msg);
     }

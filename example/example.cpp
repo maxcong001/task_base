@@ -18,13 +18,14 @@ class task_example_1 : public task_base
         tmp = TASK_ANY_CAST<std::uint32_t>(task_msg.seq_id);
         __LOG(debug, "receive message with seqid : " << tmp);
 
+#if 0
         if (tmp == 50)
         {
             __LOG(error, "exit now!!!!!");
             std::exit(EXIT_SUCCESS);
         }
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+#endif
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         task_manager::instance()->send2task(TASK2, MSG_TYPE::TASK_PUT, nullptr, i++);
         return true;
     }
@@ -45,13 +46,14 @@ class task_example_2 : public task_base
         tmp = TASK_ANY_CAST<std::uint32_t>(task_msg.seq_id);
         __LOG(debug, "receive message with seqid : " << tmp);
 
+#if 0
         if (tmp == 50)
         {
             __LOG(error, "exit now!!!!!");
             std::exit(EXIT_SUCCESS);
         }
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+#endif
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         task_manager::instance()->send2task(TASK1, MSG_TYPE::TASK_PUT, nullptr, i++);
         return true;
     }
