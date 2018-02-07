@@ -9,6 +9,7 @@ class manager_task : public task_base
     manager_task(std::string name) : task_base(name)
     {
         _name = TASK0;
+        _hb_tid = 0;
     }
 
     ~manager_task()
@@ -18,14 +19,21 @@ class manager_task : public task_base
     {
         // to do
     }
-    bool on_before_loop() override
+    void set_hb_interval(std::uint32_t interval) override
     {
-        return on_after_loop();
+        _hb_itval = interval;
+        _timer_mgr.killTimer(_hb_tid);
+        start_hb();
     }
-    bool on_after_loop() override;
+    bool on_before_loop() override;
+
     bool on_message(TASK_MSG msg) override;
 
+    bool start_hb();
+
     std::map<std::string, bool> hb_map;
+    // heart beat timer id
+    int _hb_tid;
 };
 
 typedef std::shared_ptr<task_base> task_ptr_t;
@@ -169,15 +177,22 @@ class task_manager
         // init the task0
         if (_poll)
         {
+            task_map[TASK0]->set_hb_interval(_hb_itval);
             task_map[TASK0]->init(false);
         }
         else
         {
+            task_map[TASK0]->set_hb_interval(_hb_itval);
             task_map[TASK0]->init(true);
         }
+
         return true;
     }
-
+    void set_hb_interval(std::uint32_t _hb_itval)
+    {
+        _hb_itval = _hb_itval;
+        task_map[TASK0]->set_hb_interval(_hb_itval);
+    }
     std::map<std::string, task_ptr_t> task_map;
     // heart beat interval
     std::uint32_t _hb_itval;

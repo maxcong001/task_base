@@ -6,7 +6,7 @@ class task_base
   public:
     task_base(std::string name) : _timer_mgr(_loop)
     {
-        _hb_itval = 1000;
+        _hb_itval = TASK_HB_INTERVAL;
         _name = name;
         _evfd = -1;
     }
@@ -78,7 +78,7 @@ class task_base
     {
         return _name;
     }
-    void set_hb_interval(std::uint32_t interval)
+    virtual void set_hb_interval(std::uint32_t interval)
     {
         _hb_itval = interval;
     }
