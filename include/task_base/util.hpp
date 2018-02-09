@@ -36,6 +36,7 @@ enum class MSG_TYPE : unsigned int
     TASK_PUT,
     TASK_GET,
     TASK_DEL,
+    TASK_PING,
     TASK_MAX
 };
 struct TASK_MSG

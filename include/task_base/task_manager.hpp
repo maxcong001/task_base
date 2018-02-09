@@ -22,8 +22,12 @@ class manager_task : public task_base
     void set_hb_interval(std::uint32_t interval) override
     {
         _hb_itval = interval;
-        _timer_mgr.killTimer(_hb_tid);
-        start_hb();
+        if (_hb_tid)
+        {
+            // not init, kill timer and start HB
+            _timer_mgr.killTimer(_hb_tid);
+            start_hb();
+        }
     }
     bool on_before_loop() override;
 
